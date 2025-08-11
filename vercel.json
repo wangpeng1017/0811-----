@@ -7,9 +7,6 @@
       "maxDuration": 10
     }
   },
-  "env": {
-    "ZHIPU_API_TOKEN": "@zhipu_api_token"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
