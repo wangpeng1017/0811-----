@@ -39,13 +39,13 @@ export default function Home() {
         })
       } else {
         setResult({
-          error: response.error || '识别失败，请重试',
+          error: response.error || '这个图片我看不清，换个试试吧',
           imageUrl: imageUrl // 即使失败也保留图片
         })
       }
     } catch (error) {
       console.error('上传失败:', error)
-      setResult({ error: '识别失败，请重试' })
+      setResult({ error: '这个图片我看不清，换个试试吧' })
     } finally {
       setLoading(false)
     }
