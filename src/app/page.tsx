@@ -17,6 +17,9 @@ export default function Home() {
     try {
       console.log('开始处理文件:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB')
 
+      // 创建图片预览URL
+      const imageUrl = URL.createObjectURL(file)
+
       // 如果文件较大，进行压缩
       let processedFile = file
       if (file.size > 2 * 1024 * 1024) { // 大于2MB时压缩
@@ -29,9 +32,16 @@ export default function Home() {
       const response = await analyzeImageLocation(processedFile)
 
       if (response.success && response.data) {
-        setResult(response.data)
+        // 将图片URL添加到结果中
+        setResult({
+          ...response.data,
+          imageUrl: imageUrl
+        })
       } else {
-        setResult({ error: response.error || '识别失败，请重试' })
+        setResult({
+          error: response.error || '识别失败，请重试',
+          imageUrl: imageUrl // 即使失败也保留图片
+        })
       }
     } catch (error) {
       console.error('上传失败:', error)
@@ -42,6 +52,10 @@ export default function Home() {
   }
 
   const handleReset = () => {
+    // 清理图片URL以避免内存泄漏
+    if (result && result.imageUrl) {
+      URL.revokeObjectURL(result.imageUrl)
+    }
     setResult(null)
     setLoading(false)
   }
@@ -49,17 +63,20 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-lg mx-auto">
         <div className="text-center mb-8">
           <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full shadow-lg flex items-center justify-center">
             <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            图片地理位置识别
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 leading-tight">
+            上传朋友圈的一张风景图
           </h1>
-          <p className="text-gray-600">
+          <h2 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-2">
+            我来告诉你是哪里
+          </h2>
+          <p className="text-gray-600 text-sm">
             AI智能识别图片拍摄地点
           </p>
         </div>
@@ -90,7 +107,7 @@ export default function Home() {
         )}
 
         <footer className="text-center text-sm text-gray-500 mt-8">
-          <p>© 2025 图片地理位置识别工具</p>
+          <p>© GLM-4.5V提供模型支持</p>
           <p className="mt-1">基于AI技术，快速精准识别</p>
         </footer>
       </div>

@@ -7,6 +7,8 @@ export interface LocationData {
   location?: string
   latitude?: number
   longitude?: number
+  error?: string
+  imageUrl?: string  // 添加图片URL支持
 }
 
 // API响应类型
