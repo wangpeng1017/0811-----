@@ -1,0 +1,39 @@
+// 地理位置信息类型
+export interface LocationData {
+  continent?: string
+  country?: string
+  province?: string
+  city?: string
+  location?: string
+  latitude?: number
+  longitude?: number
+}
+
+// API响应类型
+export interface ApiResponse {
+  success: boolean
+  data?: LocationData
+  error?: string
+  message?: string
+}
+
+// 智谱AI API响应类型
+export interface ZhipuAIResponse {
+  // 根据实际API响应结构定义
+  choices?: Array<{
+    message?: {
+      content?: string
+    }
+  }>
+  error?: {
+    message: string
+    type: string
+  }
+}
+
+// Token使用量统计类型
+export interface TokenUsage {
+  totalUsed: number
+  lastUpdated: string
+  limit: number
+}
