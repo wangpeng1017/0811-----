@@ -113,7 +113,7 @@ async function callZhipuAI(apiToken: string, base64Image: string, mimeType: stri
             content: [
               {
                 type: 'text',
-                text: '请仔细分析这张图片的拍摄地理位置。请根据图片中的建筑物、标识、自然景观、文字等特征，尽可能准确地识别拍摄地点。请以JSON格式返回结果，包含以下字段：\n{\n  "continent": "大洲名称",\n  "country": "国家名称", \n  "province": "省份或州名称",\n  "city": "城市名称",\n  "location": "具体地点名称",\n  "latitude": 纬度数值,\n  "longitude": 经度数值\n}\n如果无法确定某项信息，请返回null。请确保返回的是有效的JSON格式。'
+                text: '请仔细分析这张图片的拍摄地理位置。请根据图片中的建筑物、标识、自然景观、文字等特征，尽可能准确地识别拍摄地点。\n\n重要要求：\n1. 所有地名必须使用中文名称（如：亚洲、中国、北京市、天安门广场等）\n2. 不要使用英文地名（如：Asia、China、Beijing等）\n3. 坐标信息使用数字格式\n\n请以JSON格式返回结果，包含以下字段：\n{\n  "continent": "大洲中文名称（如：亚洲、欧洲、北美洲等）",\n  "country": "国家中文名称（如：中国、美国、法国等）", \n  "province": "省份或州中文名称（如：北京市、广东省、加利福尼亚州等）",\n  "city": "城市中文名称（如：北京市、上海市、洛杉矶等）",\n  "location": "具体地点中文名称（如：天安门广场、埃菲尔铁塔、自由女神像等）",\n  "latitude": 纬度数值,\n  "longitude": 经度数值\n}\n\n如果无法确定某项信息，请返回null。请确保返回的是有效的JSON格式，且所有地名都是中文。'
               },
               {
                 type: 'image_url',

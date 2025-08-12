@@ -185,8 +185,9 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
           )}
         </div>
 
-        {/* 复制按钮和成功提示 */}
-        <div className="mt-4 space-y-3">
+        {/* 操作按钮区域 */}
+        <div className="mt-4 space-y-2.5">
+          {/* 复制地点信息按钮 */}
           <button
             onClick={copyLocationInfo}
             className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
@@ -197,9 +198,17 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
             <span>复制地点信息</span>
           </button>
 
+          {/* 重新上传按钮 - 与复制按钮相同宽度和间距 */}
+          <button
+            onClick={onReset}
+            className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200"
+          >
+            重新上传
+          </button>
+
           {/* 复制成功提示 */}
           {copySuccess && (
-            <div className="text-center">
+            <div className="text-center pt-1">
               <div className="inline-flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1.5 rounded-full text-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -208,16 +217,6 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
               </div>
             </div>
           )}
-        </div>
-      
-        {/* 重新上传按钮 */}
-        <div className="text-center">
-          <button
-            onClick={onReset}
-            className="bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-all duration-200"
-          >
-            重新上传
-          </button>
         </div>
       </div>
     </div>
