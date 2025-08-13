@@ -172,19 +172,26 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
         if (audioState.isPlaying) {
           audioRef.current.pause()
         } else {
-          // 确保音频已加载
-          if (audioRef.current.readyState < 2) {
+          // 确保音频已加载并设置正确的音量
+          const audio = audioRef.current
+
+          // 设置音量确保不是静音
+          audio.volume = 0.7 // 设置70%音量
+          audio.muted = false // 确保不是静音状态
+
+          if (audio.readyState < 2) {
             setAudioState(prev => ({ ...prev, isLoading: true }))
             await new Promise((resolve, reject) => {
-              const audio = audioRef.current!
               const onCanPlay = () => {
                 audio.removeEventListener('canplay', onCanPlay)
                 audio.removeEventListener('error', onError)
+                console.log('音频已准备就绪，时长:', audio.duration)
                 resolve(void 0)
               }
-              const onError = () => {
+              const onError = (e: any) => {
                 audio.removeEventListener('canplay', onCanPlay)
                 audio.removeEventListener('error', onError)
+                console.error('音频加载错误:', e)
                 reject(new Error('音频加载失败'))
               }
               audio.addEventListener('canplay', onCanPlay)
@@ -193,14 +200,22 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
             })
             setAudioState(prev => ({ ...prev, isLoading: false }))
           }
-          await audioRef.current.play()
+
+          // 在移动端，确保用户交互后播放
+          console.log('开始播放音频，音量:', audio.volume, '静音状态:', audio.muted)
+          const playPromise = audio.play()
+
+          if (playPromise !== undefined) {
+            await playPromise
+            console.log('音频播放成功')
+          }
         }
       } catch (error) {
         console.error('音频播放失败:', error)
         setAudioState(prev => ({
           ...prev,
           isLoading: false,
-          error: '音频播放失败，请重试'
+          error: `音频播放失败: ${error instanceof Error ? error.message : '未知错误'}`
         }))
       }
     }
@@ -262,7 +277,13 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
   const handleAudioCanPlay = () => {
     setAudioState(prev => ({ ...prev, isLoading: false }))
     if (audioRef.current) {
-      setAudioState(prev => ({ ...prev, duration: audioRef.current!.duration }))
+      const audio = audioRef.current
+      console.log('音频可以播放，时长:', audio.duration, '音量:', audio.volume)
+      setAudioState(prev => ({ ...prev, duration: audio.duration }))
+
+      // 确保音频设置正确
+      audio.volume = 0.7
+      audio.muted = false
     }
   }
 
@@ -539,14 +560,42 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
                 onError={handleAudioError}
                 onLoadStart={handleAudioLoadStart}
                 onCanPlay={handleAudioCanPlay}
-                preload="metadata"
+                preload="auto"
+                controls={false}
+                muted={false}
+                crossOrigin="anonymous"
                 src="/api/mock-audio"
+                style={{ display: 'none' }}
               />
 
               {/* 音频错误提示 */}
               {audioState.error && (
                 <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
                   {audioState.error}
+                </div>
+              )}
+
+              {/* 音频调试信息 (开发环境) */}
+              {process.env.NODE_ENV === 'development' && audioState.duration > 0 && (
+                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-600 text-xs">
+                  <div>音频状态: {audioState.isPlaying ? '播放中' : '已暂停'}</div>
+                  <div>音频时长: {audioState.duration.toFixed(1)}秒</div>
+                  <div>当前时间: {audioState.currentTime.toFixed(1)}秒</div>
+                  <div>音频源: /api/mock-audio</div>
+                  {audioRef.current && (
+                    <div>
+                      <div>音量: {(audioRef.current.volume * 100).toFixed(0)}%</div>
+                      <div>静音: {audioRef.current.muted ? '是' : '否'}</div>
+                      <div>就绪状态: {audioRef.current.readyState}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 移动端音频提示 */}
+              {audioState.duration > 0 && !audioState.isPlaying && !audioState.error && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-700 text-sm">
+                  💡 提示：如果听不到声音，请检查设备音量设置，在移动端请确保不是静音模式。
                 </div>
               )}
             </div>
