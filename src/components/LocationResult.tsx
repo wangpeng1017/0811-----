@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import { ChatMessage } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
+import { markdownToPlainText } from '@/lib/markdown-utils'
 
 interface LocationData {
   continent?: string
@@ -181,6 +182,8 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
 
             if (data === '[DONE]') {
               setIsStreaming(false)
+              // 流式传输完成后，清理可能的markdown格式
+              setIntroduction(prev => markdownToPlainText(prev))
               return
             }
 

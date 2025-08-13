@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { formatChatAnswer } from '@/lib/markdown-utils'
 
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 
@@ -94,10 +95,13 @@ ${locationInfo}
         isActive: false
       }))
 
+    // 格式化介绍内容，移除markdown语法
+    const formattedIntroduction = formatChatAnswer(introduction)
+
     return NextResponse.json({
       success: true,
       data: {
-        introduction,
+        introduction: formattedIntroduction,
         paragraphs
       }
     })

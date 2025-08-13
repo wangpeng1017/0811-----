@@ -9,11 +9,11 @@ export interface ExampleImage {
 
 export const exampleImages: ExampleImage[] = [
   {
-    id: 'shanghai-bund',
-    url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop&crop=center&q=80',
-    alt: '上海外滩夜景',
+    id: 'shanghai-disney',
+    url: 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?w=800&h=600&fit=crop&crop=center&q=80',
+    alt: '上海迪士尼乐园',
     city: '上海',
-    landmark: '外滩'
+    landmark: '迪士尼乐园'
   },
   {
     id: 'beijing-tiananmen',

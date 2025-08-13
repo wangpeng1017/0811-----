@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { markdownToPlainText } from '@/lib/markdown-utils'
 
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 
@@ -39,6 +40,8 @@ ${locationInfo}
 4. 如果是5A级景区，请特别说明其等级和特色
 5. 推荐周边的其他景点或美食
 6. 内容要详细丰富，至少300字
+7. 请使用纯文本格式，不要使用任何Markdown语法标记（如**、##、*等）
+8. 段落之间用空行分隔，保持自然的文本格式
 
 请用中文回答，语言要生动有趣，适合游客阅读。`
 
