@@ -10,7 +10,6 @@ export interface LocationData {
   error?: string
   imageUrl?: string  // 添加图片URL支持
   introduction?: string  // 地点介绍文本
-  audioUrl?: string  // 音频文件URL
   shareId?: string  // 分享ID
 }
 
@@ -43,14 +42,7 @@ export interface TokenUsage {
   limit: number
 }
 
-// 音频播放状态
-export interface AudioState {
-  isPlaying: boolean
-  currentTime: number
-  duration: number
-  isLoading: boolean
-  error?: string
-}
+
 
 // 分享内容类型
 export interface ShareContent {
@@ -60,11 +52,4 @@ export interface ShareContent {
   expiresAt: string
 }
 
-// 地点介绍段落类型
-export interface IntroductionParagraph {
-  id: number
-  text: string
-  startTime: number
-  endTime: number
-  isActive: boolean
-}
+

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
-import { AudioState, IntroductionParagraph } from '@/types'
 
 interface LocationData {
   continent?: string
@@ -15,7 +14,6 @@ interface LocationData {
   error?: string
   imageUrl?: string
   introduction?: string
-  audioUrl?: string
   shareId?: string
 }
 
@@ -26,18 +24,11 @@ interface LocationResultProps {
 
 export default function LocationResult({ result, onReset }: LocationResultProps) {
   const [copySuccess, setCopySuccess] = useState(false)
-  const [audioState, setAudioState] = useState<AudioState>({
-    isPlaying: false,
-    currentTime: 0,
-    duration: 0,
-    isLoading: false
-  })
+  const [isLoading, setIsLoading] = useState(false)
   const [introduction, setIntroduction] = useState<string>('')
-  const [paragraphs, setParagraphs] = useState<IntroductionParagraph[]>([])
   const [shareUrl, setShareUrl] = useState<string>('')
   const [showQR, setShowQR] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
-  const audioRef = useRef<HTMLAudioElement>(null)
 
   // 复制地点信息到剪贴板
   const copyLocationInfo = async () => {
@@ -94,7 +85,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
   const generateIntroduction = async () => {
     if (!result || result.error) return
 
-    setAudioState(prev => ({ ...prev, isLoading: true }))
+    setIsLoading(true)
 
     try {
       const response = await fetch('/api/generate-introduction', {
@@ -106,186 +97,21 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
       const data = await response.json()
       if (data.success) {
         setIntroduction(data.data.introduction)
-        setParagraphs(data.data.paragraphs)
-
-        // 生成音频
-        await generateAudio(data.data.introduction)
       } else {
         console.error('生成介绍失败:', data.error)
       }
     } catch (error) {
       console.error('生成介绍失败:', error)
     } finally {
-      setAudioState(prev => ({ ...prev, isLoading: false }))
+      setIsLoading(false)
     }
   }
 
-  // 生成音频
-  const generateAudio = async (text: string) => {
-    try {
-      const response = await fetch('/api/generate-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
-      })
 
-      const data = await response.json()
-      if (data.success) {
-        setAudioState(prev => ({
-          ...prev,
-          duration: data.data.duration
-        }))
 
-        // 计算段落时间
-        calculateParagraphTiming(data.data.duration)
-      }
-    } catch (error) {
-      console.error('生成音频失败:', error)
-    }
-  }
 
-  // 计算段落时间
-  const calculateParagraphTiming = (totalDuration: number) => {
-    const totalLength = paragraphs.reduce((sum, p) => sum + p.text.length, 0)
-    let currentTime = 0
 
-    const updatedParagraphs = paragraphs.map(paragraph => {
-      const duration = (paragraph.text.length / totalLength) * totalDuration
-      const startTime = currentTime
-      const endTime = currentTime + duration
-      currentTime = endTime
 
-      return {
-        ...paragraph,
-        startTime,
-        endTime
-      }
-    })
-
-    setParagraphs(updatedParagraphs)
-  }
-
-  // 音频控制
-  const toggleAudio = async () => {
-    if (audioRef.current) {
-      try {
-        if (audioState.isPlaying) {
-          audioRef.current.pause()
-        } else {
-          // 确保音频已加载并设置正确的音量
-          const audio = audioRef.current
-
-          // 设置音量确保不是静音
-          audio.volume = 0.7 // 设置70%音量
-          audio.muted = false // 确保不是静音状态
-
-          if (audio.readyState < 2) {
-            setAudioState(prev => ({ ...prev, isLoading: true }))
-            await new Promise((resolve, reject) => {
-              const onCanPlay = () => {
-                audio.removeEventListener('canplay', onCanPlay)
-                audio.removeEventListener('error', onError)
-                console.log('音频已准备就绪，时长:', audio.duration)
-                resolve(void 0)
-              }
-              const onError = (e: any) => {
-                audio.removeEventListener('canplay', onCanPlay)
-                audio.removeEventListener('error', onError)
-                console.error('音频加载错误:', e)
-                reject(new Error('音频加载失败'))
-              }
-              audio.addEventListener('canplay', onCanPlay)
-              audio.addEventListener('error', onError)
-              audio.load()
-            })
-            setAudioState(prev => ({ ...prev, isLoading: false }))
-          }
-
-          // 在移动端，确保用户交互后播放
-          console.log('开始播放音频，音量:', audio.volume, '静音状态:', audio.muted)
-          const playPromise = audio.play()
-
-          if (playPromise !== undefined) {
-            await playPromise
-            console.log('音频播放成功')
-          }
-        }
-      } catch (error) {
-        console.error('音频播放失败:', error)
-        setAudioState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: `音频播放失败: ${error instanceof Error ? error.message : '未知错误'}`
-        }))
-      }
-    }
-  }
-
-  const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      setAudioState(prev => ({ ...prev, currentTime: 0 }))
-    }
-  }
-
-  // 音频事件处理
-  const handleAudioTimeUpdate = () => {
-    if (audioRef.current) {
-      const currentTime = audioRef.current.currentTime
-      setAudioState(prev => ({ ...prev, currentTime }))
-
-      // 更新活跃段落
-      const activeParagraph = paragraphs.find(p =>
-        currentTime >= p.startTime && currentTime <= p.endTime
-      )
-
-      setParagraphs(prev => prev.map(p => ({
-        ...p,
-        isActive: activeParagraph ? p.id === activeParagraph.id : false
-      })))
-    }
-  }
-
-  const handleAudioPlay = () => {
-    setAudioState(prev => ({ ...prev, isPlaying: true }))
-  }
-
-  const handleAudioPause = () => {
-    setAudioState(prev => ({ ...prev, isPlaying: false }))
-  }
-
-  const handleAudioEnded = () => {
-    setAudioState(prev => ({ ...prev, isPlaying: false, currentTime: 0 }))
-    setParagraphs(prev => prev.map(p => ({ ...p, isActive: false })))
-  }
-
-  const handleAudioError = (error: any) => {
-    console.error('音频错误:', error)
-    setAudioState(prev => ({
-      ...prev,
-      isPlaying: false,
-      isLoading: false,
-      error: '音频加载失败，请重试'
-    }))
-  }
-
-  const handleAudioLoadStart = () => {
-    setAudioState(prev => ({ ...prev, isLoading: true, error: undefined }))
-  }
-
-  const handleAudioCanPlay = () => {
-    setAudioState(prev => ({ ...prev, isLoading: false }))
-    if (audioRef.current) {
-      const audio = audioRef.current
-      console.log('音频可以播放，时长:', audio.duration, '音量:', audio.volume)
-      setAudioState(prev => ({ ...prev, duration: audio.duration }))
-
-      // 确保音频设置正确
-      audio.volume = 0.7
-      audio.muted = false
-    }
-  }
 
   // 分享功能
   const createShare = async () => {
@@ -296,8 +122,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
         body: JSON.stringify({
           locationData: {
             ...result,
-            introduction,
-            audioUrl: audioState.duration > 0 ? '/api/mock-audio' : undefined
+            introduction
           }
         })
       })
@@ -328,12 +153,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
     }
   }
 
-  // 格式化时间
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
+
   if (result.error) {
     return (
       <div className="w-full bg-white border border-red-200 rounded-xl shadow-xl overflow-hidden">
@@ -458,15 +278,15 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
           )}
         </div>
 
-        {/* 景点介绍和音频播放区域 */}
+        {/* 景点介绍区域 */}
         <div className="mt-6 border-t border-gray-100 pt-4">
           {!introduction ? (
             <button
               onClick={generateIntroduction}
-              disabled={audioState.isLoading}
+              disabled={isLoading}
               className="w-full bg-purple-500 hover:bg-purple-600 active:bg-purple-700 disabled:bg-purple-300 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
             >
-              {audioState.isLoading ? (
+              {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                   <span>生成介绍中...</span>
@@ -474,130 +294,23 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
               ) : (
                 <>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M8.586 17.414l4.95-4.95a1 1 0 00-1.414-1.414L7.172 16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>播放景点介绍</span>
+                  <span>生成景点介绍</span>
                 </>
               )}
             </button>
           ) : (
             <div className="space-y-4">
-              {/* 音频控制器 */}
+              {/* 景点介绍标题 */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-gray-800">景点介绍</h4>
-                  <span className="text-sm text-gray-600">
-                    总时长: {formatTime(audioState.duration)}
-                  </span>
-                </div>
+                <h4 className="font-medium text-gray-800 mb-3">景点介绍</h4>
 
-                {/* 音频控制按钮 */}
-                <div className="flex items-center space-x-3 mb-3">
-                  <button
-                    onClick={toggleAudio}
-                    className="bg-purple-500 hover:bg-purple-600 text-white rounded-full p-2 transition-colors duration-200"
-                  >
-                    {audioState.isPlaying ? (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15" />
-                      </svg>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={stopAudio}
-                    className="bg-gray-500 hover:bg-gray-600 text-white rounded-full p-2 transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10h6v4H9z" />
-                    </svg>
-                  </button>
-
-                  <div className="flex-1 text-sm text-gray-600">
-                    {formatTime(audioState.currentTime)} / {formatTime(audioState.duration)}
-                  </div>
-                </div>
-
-                {/* 进度条 */}
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-purple-500 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${audioState.duration > 0 ? (audioState.currentTime / audioState.duration) * 100 : 0}%`
-                    }}
-                  ></div>
+                {/* 介绍文本 */}
+                <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
+                  {introduction}
                 </div>
               </div>
-
-              {/* 介绍文本 */}
-              <div className="space-y-3">
-                {paragraphs.map((paragraph) => (
-                  <p
-                    key={paragraph.id}
-                    className={`text-sm leading-relaxed transition-all duration-300 p-3 rounded-lg ${
-                      paragraph.isActive
-                        ? 'bg-purple-50 border-l-4 border-purple-500 text-purple-900'
-                        : 'text-gray-700'
-                    }`}
-                  >
-                    {paragraph.text}
-                  </p>
-                ))}
-              </div>
-
-              {/* 隐藏的音频元素 */}
-              <audio
-                ref={audioRef}
-                onTimeUpdate={handleAudioTimeUpdate}
-                onPlay={handleAudioPlay}
-                onPause={handleAudioPause}
-                onEnded={handleAudioEnded}
-                onError={handleAudioError}
-                onLoadStart={handleAudioLoadStart}
-                onCanPlay={handleAudioCanPlay}
-                preload="auto"
-                controls={false}
-                muted={false}
-                crossOrigin="anonymous"
-                src="/api/mock-audio"
-                style={{ display: 'none' }}
-              />
-
-              {/* 音频错误提示 */}
-              {audioState.error && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
-                  {audioState.error}
-                </div>
-              )}
-
-              {/* 音频调试信息 (开发环境) */}
-              {process.env.NODE_ENV === 'development' && audioState.duration > 0 && (
-                <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-blue-600 text-xs">
-                  <div>音频状态: {audioState.isPlaying ? '播放中' : '已暂停'}</div>
-                  <div>音频时长: {audioState.duration.toFixed(1)}秒</div>
-                  <div>当前时间: {audioState.currentTime.toFixed(1)}秒</div>
-                  <div>音频源: /api/mock-audio</div>
-                  {audioRef.current && (
-                    <div>
-                      <div>音量: {(audioRef.current.volume * 100).toFixed(0)}%</div>
-                      <div>静音: {audioRef.current.muted ? '是' : '否'}</div>
-                      <div>就绪状态: {audioRef.current.readyState}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 移动端音频提示 */}
-              {audioState.duration > 0 && !audioState.isPlaying && !audioState.error && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-700 text-sm">
-                  💡 提示：如果听不到声音，请检查设备音量设置，在移动端请确保不是静音模式。
-                </div>
-              )}
             </div>
           )}
         </div>
