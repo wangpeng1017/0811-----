@@ -50,11 +50,33 @@ export async function POST(request: NextRequest) {
     // 存储分享内容
     shareStorage.set(shareId, shareContent)
 
+    // 获取正确的基础URL
+    const getBaseUrl = (request: NextRequest) => {
+      // 优先使用环境变量
+      if (process.env.NEXT_PUBLIC_BASE_URL) {
+        return process.env.NEXT_PUBLIC_BASE_URL
+      }
+
+      // 从请求头获取
+      const host = request.headers.get('host')
+      const protocol = request.headers.get('x-forwarded-proto') || 'https'
+
+      if (host) {
+        return `${protocol}://${host}`
+      }
+
+      // 默认值
+      return 'http://localhost:3000'
+    }
+
+    const baseUrl = getBaseUrl(request)
+    const shareUrl = `${baseUrl}/share/${shareId}`
+
     return NextResponse.json({
       success: true,
       data: {
         shareId,
-        shareUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/share/${shareId}`,
+        shareUrl,
         expiresAt: expiresAt.toISOString()
       }
     })

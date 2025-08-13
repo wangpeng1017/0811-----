@@ -45,13 +45,23 @@ export async function POST(request: NextRequest) {
 
 // 模拟音频文件端点
 export async function GET() {
-  // 返回一个空的音频响应头
+  // 生成一个简单的音频文件（静音音频）用于测试
   // 在实际应用中，这里应该返回真实的音频文件
-  return new NextResponse(null, {
+
+  // 创建一个最小的有效MP3文件头（静音音频）
+  const mp3Header = Buffer.from([
+    0xFF, 0xFB, 0x90, 0x00, // MP3 header
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  ])
+
+  return new NextResponse(mp3Header, {
     status: 200,
     headers: {
       'Content-Type': 'audio/mpeg',
-      'Content-Length': '0'
+      'Content-Length': mp3Header.length.toString(),
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'public, max-age=3600'
     }
   })
 }

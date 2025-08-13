@@ -166,12 +166,42 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
   }
 
   // 音频控制
-  const toggleAudio = () => {
+  const toggleAudio = async () => {
     if (audioRef.current) {
-      if (audioState.isPlaying) {
-        audioRef.current.pause()
-      } else {
-        audioRef.current.play()
+      try {
+        if (audioState.isPlaying) {
+          audioRef.current.pause()
+        } else {
+          // 确保音频已加载
+          if (audioRef.current.readyState < 2) {
+            setAudioState(prev => ({ ...prev, isLoading: true }))
+            await new Promise((resolve, reject) => {
+              const audio = audioRef.current!
+              const onCanPlay = () => {
+                audio.removeEventListener('canplay', onCanPlay)
+                audio.removeEventListener('error', onError)
+                resolve(void 0)
+              }
+              const onError = () => {
+                audio.removeEventListener('canplay', onCanPlay)
+                audio.removeEventListener('error', onError)
+                reject(new Error('音频加载失败'))
+              }
+              audio.addEventListener('canplay', onCanPlay)
+              audio.addEventListener('error', onError)
+              audio.load()
+            })
+            setAudioState(prev => ({ ...prev, isLoading: false }))
+          }
+          await audioRef.current.play()
+        }
+      } catch (error) {
+        console.error('音频播放失败:', error)
+        setAudioState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: '音频播放失败，请重试'
+        }))
       }
     }
   }
@@ -180,6 +210,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
+      setAudioState(prev => ({ ...prev, currentTime: 0 }))
     }
   }
 
@@ -212,6 +243,27 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
   const handleAudioEnded = () => {
     setAudioState(prev => ({ ...prev, isPlaying: false, currentTime: 0 }))
     setParagraphs(prev => prev.map(p => ({ ...p, isActive: false })))
+  }
+
+  const handleAudioError = (error: any) => {
+    console.error('音频错误:', error)
+    setAudioState(prev => ({
+      ...prev,
+      isPlaying: false,
+      isLoading: false,
+      error: '音频加载失败，请重试'
+    }))
+  }
+
+  const handleAudioLoadStart = () => {
+    setAudioState(prev => ({ ...prev, isLoading: true, error: undefined }))
+  }
+
+  const handleAudioCanPlay = () => {
+    setAudioState(prev => ({ ...prev, isLoading: false }))
+    if (audioRef.current) {
+      setAudioState(prev => ({ ...prev, duration: audioRef.current!.duration }))
+    }
   }
 
   // 分享功能
@@ -484,8 +536,19 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
                 onPlay={handleAudioPlay}
                 onPause={handleAudioPause}
                 onEnded={handleAudioEnded}
+                onError={handleAudioError}
+                onLoadStart={handleAudioLoadStart}
+                onCanPlay={handleAudioCanPlay}
+                preload="metadata"
                 src="/api/mock-audio"
               />
+
+              {/* 音频错误提示 */}
+              {audioState.error && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                  {audioState.error}
+                </div>
+              )}
             </div>
           )}
         </div>
