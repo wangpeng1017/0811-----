@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
+import { ChatMessage } from '@/types'
+import { v4 as uuidv4 } from 'uuid'
 
 interface LocationData {
   continent?: string
@@ -29,6 +31,12 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
   const [shareUrl, setShareUrl] = useState<string>('')
   const [showQR, setShowQR] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
+
+  // 对话相关状态
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [currentMessage, setCurrentMessage] = useState<string>('')
+  const [isChatLoading, setIsChatLoading] = useState(false)
+  const [showChat, setShowChat] = useState(false)
 
   // 复制地点信息到剪贴板
   const copyLocationInfo = async () => {
@@ -107,6 +115,54 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
     }
   }
 
+  // 发送对话消息
+  const sendChatMessage = async () => {
+    if (!currentMessage.trim() || isChatLoading) return
+
+    const userMessage = currentMessage.trim()
+    setCurrentMessage('')
+    setIsChatLoading(true)
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          locationData: {
+            ...result,
+            introduction
+          },
+          chatHistory: chatMessages
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        const newMessage: ChatMessage = {
+          id: uuidv4(),
+          question: userMessage,
+          answer: data.data.answer,
+          timestamp: data.data.timestamp
+        }
+        setChatMessages(prev => [...prev, newMessage])
+      } else {
+        console.error('对话失败:', data.error)
+      }
+    } catch (error) {
+      console.error('发送消息失败:', error)
+    } finally {
+      setIsChatLoading(false)
+    }
+  }
+
+  // 处理回车键发送消息
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendChatMessage()
+    }
+  }
 
 
 
@@ -195,7 +251,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
       {/* 分享按钮 - 右上角 */}
       <button
         onClick={createShare}
-        className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 shadow-lg transition-all duration-200"
+        className="absolute top-4 right-4 z-30 bg-white/90 hover:bg-white border border-gray-200 rounded-full p-2 shadow-lg transition-all duration-200"
         title="分享结果"
       >
         <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,19 +259,21 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
         </svg>
       </button>
 
-      {/* 图片显示区域 */}
+      {/* 图片显示区域 - 悬浮固定 */}
       {result.imageUrl && (
-        <div className="w-full">
+        <div className="w-full sticky top-0 z-20 bg-white shadow-sm">
           <img
             src={result.imageUrl}
             alt="上传的图片"
-            className="w-full h-48 sm:h-56 md:h-64 object-cover"
+            className="w-full h-32 sm:h-40 md:h-48 object-cover"
           />
+          {/* 渐变遮罩，提供更好的视觉过渡 */}
+          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
         </div>
       )}
 
       {/* 结果信息区域 */}
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 relative z-10">
         <div className="text-center mb-4">
           <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
             <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,6 +368,79 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
                 <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
                   {introduction}
                 </div>
+              </div>
+
+              {/* 对话功能区域 */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-800">与AI对话</h4>
+                  <button
+                    onClick={() => setShowChat(!showChat)}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    {showChat ? '收起对话' : '展开对话'}
+                  </button>
+                </div>
+
+                {showChat && (
+                  <div className="space-y-4">
+                    {/* 对话历史 */}
+                    {chatMessages.length > 0 && (
+                      <div className="max-h-60 overflow-y-auto space-y-3 bg-white rounded-lg p-3">
+                        {chatMessages.map((message) => (
+                          <div key={message.id} className="space-y-2">
+                            {/* 用户问题 */}
+                            <div className="flex justify-end">
+                              <div className="bg-blue-500 text-white rounded-lg px-3 py-2 max-w-xs text-sm">
+                                {message.question}
+                              </div>
+                            </div>
+                            {/* AI回答 */}
+                            <div className="flex justify-start">
+                              <div className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 max-w-xs text-sm">
+                                {message.answer}
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-500 text-center">
+                              {new Date(message.timestamp).toLocaleString('zh-CN')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 输入框 */}
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={currentMessage}
+                        onChange={(e) => setCurrentMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="问问关于这个地方的任何问题..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isChatLoading}
+                      />
+                      <button
+                        onClick={sendChatMessage}
+                        disabled={!currentMessage.trim() || isChatLoading}
+                        className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200"
+                      >
+                        {isChatLoading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        ) : (
+                          '发送'
+                        )}
+                      </button>
+                    </div>
+
+                    {/* 提示文本 */}
+                    {chatMessages.length === 0 && (
+                      <div className="text-center text-gray-600 text-sm">
+                        💡 您可以询问关于这个地方的历史、文化、旅游建议等任何问题
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -52,4 +52,18 @@ export interface ShareContent {
   expiresAt: string
 }
 
+// 对话消息类型
+export interface ChatMessage {
+  id: string
+  question: string
+  answer: string
+  timestamp: string
+}
+
+// 对话历史类型
+export interface ChatHistory {
+  messages: ChatMessage[]
+  locationData?: LocationData
+}
+
 

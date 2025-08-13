@@ -4,6 +4,8 @@ import { ShareContent } from '@/types'
 
 // 简单的内存存储（生产环境应使用数据库）
 const shareStorage = new Map<string, ShareContent>()
+// 图片存储（内存中，生产环境应使用文件系统或云存储）
+const imageStorage = new Map<string, Buffer>()
 
 // 清理过期的分享内容
 function cleanupExpiredShares() {

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import ImageUpload from '@/components/ImageUpload'
 import LocationResult from '@/components/LocationResult'
+import ExampleImages from '@/components/ExampleImages'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { analyzeImageLocation, compressImage } from '@/lib/api'
 
@@ -17,9 +18,6 @@ export default function Home() {
     try {
       console.log('开始处理文件:', file.name, '大小:', (file.size / 1024 / 1024).toFixed(2) + 'MB')
 
-      // 创建图片预览URL
-      const imageUrl = URL.createObjectURL(file)
-
       // 如果文件较大，进行压缩
       let processedFile = file
       if (file.size > 2 * 1024 * 1024) { // 大于2MB时压缩
@@ -28,19 +26,37 @@ export default function Home() {
         console.log('压缩后大小:', (processedFile.size / 1024 / 1024).toFixed(2) + 'MB')
       }
 
+      // 先上传图片到服务器
+      console.log('上传图片到服务器...')
+      const uploadFormData = new FormData()
+      uploadFormData.append('image', processedFile)
+
+      const uploadResponse = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: uploadFormData,
+      })
+
+      const uploadData = await uploadResponse.json()
+      if (!uploadData.success) {
+        throw new Error(uploadData.error || '图片上传失败')
+      }
+
+      const serverImageUrl = uploadData.data.imageUrl
+      console.log('图片上传成功:', serverImageUrl)
+
       // 调用API分析图片
       const response = await analyzeImageLocation(processedFile)
 
       if (response.success && response.data) {
-        // 将图片URL添加到结果中
+        // 将服务器图片URL添加到结果中
         setResult({
           ...response.data,
-          imageUrl: imageUrl
+          imageUrl: serverImageUrl
         })
       } else {
         setResult({
           error: response.error || '这个图片我看不清，换个试试吧',
-          imageUrl: imageUrl // 即使失败也保留图片
+          imageUrl: serverImageUrl // 即使失败也保留图片
         })
       }
     } catch (error) {
@@ -52,12 +68,73 @@ export default function Home() {
   }
 
   const handleReset = () => {
-    // 清理图片URL以避免内存泄漏
-    if (result && result.imageUrl) {
-      URL.revokeObjectURL(result.imageUrl)
-    }
+    // 重置状态
     setResult(null)
     setLoading(false)
+  }
+
+  // 处理示例图片选择
+  const handleExampleImageSelect = async (imageUrl: string) => {
+    setLoading(true)
+    setResult(null)
+
+    try {
+      console.log('开始处理示例图片:', imageUrl)
+
+      // 从URL获取图片
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+
+      // 创建File对象
+      const file = new File([blob], 'example-image.jpg', { type: 'image/jpeg' })
+
+      // 如果文件较大，进行压缩
+      let processedFile = file
+      if (file.size > 2 * 1024 * 1024) { // 大于2MB时压缩
+        console.log('压缩图片中...')
+        processedFile = await compressImage(file, 1920, 0.8)
+        console.log('压缩后大小:', (processedFile.size / 1024 / 1024).toFixed(2) + 'MB')
+      }
+
+      // 先上传图片到服务器
+      console.log('上传图片到服务器...')
+      const uploadFormData = new FormData()
+      uploadFormData.append('image', processedFile)
+
+      const uploadResponse = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: uploadFormData,
+      })
+
+      const uploadData = await uploadResponse.json()
+      if (!uploadData.success) {
+        throw new Error(uploadData.error || '图片上传失败')
+      }
+
+      const serverImageUrl = uploadData.data.imageUrl
+      console.log('图片上传成功:', serverImageUrl)
+
+      // 调用API分析图片
+      const analysisResponse = await analyzeImageLocation(processedFile)
+
+      if (analysisResponse.success && analysisResponse.data) {
+        // 将服务器图片URL添加到结果中
+        setResult({
+          ...analysisResponse.data,
+          imageUrl: serverImageUrl
+        })
+      } else {
+        setResult({
+          error: analysisResponse.error || '这个图片我看不清，换个试试吧',
+          imageUrl: serverImageUrl // 即使失败也保留图片
+        })
+      }
+    } catch (error) {
+      console.error('处理示例图片失败:', error)
+      setResult({ error: '处理图片失败，请重试' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -82,9 +159,19 @@ export default function Home() {
         </div>
 
         {!result && !loading && (
-          <div className="bg-white rounded-2xl shadow-xl p-6">
-            <ImageUpload onUpload={handleUpload} />
-          </div>
+          <>
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <ImageUpload onUpload={handleUpload} />
+            </div>
+
+            {/* 示例图片展示 */}
+            <div className="bg-white rounded-2xl shadow-xl p-6">
+              <ExampleImages
+                onImageSelect={handleExampleImageSelect}
+                disabled={loading}
+              />
+            </div>
+          </>
         )}
 
         {loading && (
