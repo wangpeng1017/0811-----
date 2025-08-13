@@ -165,7 +165,7 @@ export default function Home() {
             </div>
 
             {/* 示例图片展示 */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="bg-white rounded-2xl shadow-xl p-6 mt-2">
               <ExampleImages
                 onImageSelect={handleExampleImageSelect}
                 disabled={loading}
@@ -195,7 +195,15 @@ export default function Home() {
 
         <footer className="text-center text-sm text-gray-500 mt-8">
           <p>© GLM-4.5V提供模型支持</p>
-          <p className="mt-1">基于AI技术，快速精准识别</p>
+          <p className="mt-1">
+            联系作者：
+            <a
+              href="mailto:wangpeng10170414@gmail.com"
+              className="text-blue-500 hover:text-blue-600 underline"
+            >
+              wangpeng10170414@gmail.com
+            </a>
+          </p>
         </footer>
       </div>
     </main>

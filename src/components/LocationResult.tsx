@@ -262,28 +262,20 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
       {/* 图片显示区域 - 悬浮固定 */}
       {result.imageUrl && (
         <div className="w-full sticky top-0 z-20 bg-white shadow-sm">
-          <img
-            src={result.imageUrl}
-            alt="上传的图片"
-            className="w-full h-32 sm:h-40 md:h-48 object-cover"
-          />
-          {/* 渐变遮罩，提供更好的视觉过渡 */}
-          <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
+          <div className="relative w-full">
+            <img
+              src={result.imageUrl}
+              alt="上传的图片"
+              className="w-full h-auto max-h-64 object-contain"
+            />
+            {/* 渐变遮罩，提供更好的视觉过渡 */}
+            <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-white to-transparent"></div>
+          </div>
         </div>
       )}
 
       {/* 结果信息区域 */}
       <div className="p-4 sm:p-6 relative z-10">
-        <div className="text-center mb-4">
-          <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-800">识别成功</h3>
-          <p className="text-gray-600 text-sm mt-1">以下是图片的地理位置信息</p>
-        </div>
       
         {/* 地点信息列表 - 紧凑布局 */}
         <div className="space-y-1.5">

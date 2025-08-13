@@ -10,7 +10,7 @@ export interface ExampleImage {
 export const exampleImages: ExampleImage[] = [
   {
     id: 'shanghai-bund',
-    url: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop&crop=center&q=80',
+    url: 'https://images.unsplash.com/photo-1545893835-abaa50cbe628?w=800&h=600&fit=crop&crop=center&q=80',
     alt: '上海外滩夜景',
     city: '上海',
     landmark: '外滩'
