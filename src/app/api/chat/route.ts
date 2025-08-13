@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { formatChatAnswer } from '@/lib/markdown-utils'
 
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
 3. 可以包含历史背景、文化特色、旅游建议等
 4. 语言要友好、专业
 5. 如果问题与当前地点无关，也可以提供相关的地理知识
+6. 请使用纯文本格式回答，不要使用Markdown语法标记
 
 ${locationContext}`
       }
@@ -100,11 +102,14 @@ ${locationContext}`
       )
     }
 
+    // 将markdown格式转换为纯文本
+    const formattedAnswer = formatChatAnswer(answer)
+
     return NextResponse.json({
       success: true,
       data: {
         question: message,
-        answer: answer,
+        answer: formattedAnswer,
         timestamp: new Date().toISOString()
       }
     })

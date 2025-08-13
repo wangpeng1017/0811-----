@@ -28,6 +28,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
   const [copySuccess, setCopySuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [introduction, setIntroduction] = useState<string>('')
+  const [isStreaming, setIsStreaming] = useState(false)
   const [shareUrl, setShareUrl] = useState<string>('')
   const [showQR, setShowQR] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
@@ -89,29 +90,115 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
     document.body.removeChild(textArea)
   }
 
-  // 生成地点介绍
+  // 生成地点介绍（带重试机制）
   const generateIntroduction = async () => {
-    if (!result || result.error) return
+    if (!result || result.error || isLoading) return
 
     setIsLoading(true)
 
+    const maxRetries = 3
+    let lastError = null
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`尝试生成介绍 (第${attempt}次)`)
+
+        const response = await fetch('/api/generate-introduction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locationData: result })
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        if (data.success && data.data?.introduction) {
+          setIntroduction(data.data.introduction)
+          console.log('介绍生成成功')
+          setIsLoading(false)
+          return // 成功，退出重试循环
+        } else {
+          throw new Error(data.error || '返回数据格式错误')
+        }
+      } catch (error) {
+        lastError = error
+        console.error(`第${attempt}次尝试失败:`, error)
+
+        if (attempt < maxRetries) {
+          // 等待一段时间后重试
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+        }
+      }
+    }
+
+    // 所有重试都失败了
+    console.error('生成介绍最终失败:', lastError)
+
+    // 无论成功还是失败，都要重置加载状态
+    setIsLoading(false)
+  }
+
+  // 流式生成地点介绍
+  const generateIntroductionStream = async () => {
+    if (!result || result.error || isLoading || isStreaming) return
+
+    setIsStreaming(true)
+    setIntroduction('') // 清空之前的内容
+
     try {
-      const response = await fetch('/api/generate-introduction', {
+      const response = await fetch('/api/generate-introduction-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ locationData: result })
       })
 
-      const data = await response.json()
-      if (data.success) {
-        setIntroduction(data.data.introduction)
-      } else {
-        console.error('生成介绍失败:', data.error)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('无法获取响应流')
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+
+            if (data === '[DONE]') {
+              setIsStreaming(false)
+              return
+            }
+
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.content) {
+                setIntroduction(prev => prev + parsed.content)
+              }
+            } catch (parseError) {
+              console.error('解析流数据失败:', parseError)
+            }
+          }
+        }
       }
     } catch (error) {
-      console.error('生成介绍失败:', error)
+      console.error('流式生成介绍失败:', error)
     } finally {
-      setIsLoading(false)
+      setIsStreaming(false)
     }
   }
 
@@ -330,16 +417,16 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
 
         {/* 景点介绍区域 */}
         <div className="mt-6 border-t border-gray-100 pt-4">
-          {!introduction ? (
+          {!introduction && !isStreaming ? (
             <button
-              onClick={generateIntroduction}
-              disabled={isLoading}
+              onClick={generateIntroductionStream}
+              disabled={isLoading || isStreaming}
               className="w-full bg-purple-500 hover:bg-purple-600 active:bg-purple-700 disabled:bg-purple-300 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
             >
-              {isLoading ? (
+              {isLoading || isStreaming ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>生成介绍中...</span>
+                  <span>{isStreaming ? '正在生成介绍...' : '生成介绍中...'}</span>
                 </>
               ) : (
                 <>
@@ -354,11 +441,22 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
             <div className="space-y-4">
               {/* 景点介绍标题 */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800 mb-3">景点介绍</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-800">景点介绍</h4>
+                  {isStreaming && (
+                    <div className="flex items-center space-x-2 text-purple-600">
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-purple-600 border-t-transparent"></div>
+                      <span className="text-xs">正在生成中...</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* 介绍文本 */}
                 <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
                   {introduction}
+                  {isStreaming && (
+                    <span className="inline-block w-2 h-4 bg-purple-500 animate-pulse ml-1"></span>
+                  )}
                 </div>
               </div>
 
@@ -389,7 +487,7 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
                             </div>
                             {/* AI回答 */}
                             <div className="flex justify-start">
-                              <div className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 max-w-xs text-sm">
+                              <div className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 max-w-xs text-sm whitespace-pre-line">
                                 {message.answer}
                               </div>
                             </div>
