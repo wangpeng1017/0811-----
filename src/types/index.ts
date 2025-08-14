@@ -48,6 +48,8 @@ export interface TokenUsage {
 export interface ShareContent {
   id: string
   locationData: LocationData
+  imageUrl: string
+  introduction?: string
   timestamp: string
   expiresAt: string
 }

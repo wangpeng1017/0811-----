@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { ShareContent } from '@/types'
 import LocationResult from '@/components/LocationResult'
+import StructuredData from '@/components/StructuredData'
 
 export default function SharePage() {
   const params = useParams()
@@ -86,8 +88,25 @@ export default function SharePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="w-full max-w-lg mx-auto">
+        {/* 面包屑导航 */}
+        <nav className="mb-6" aria-label="面包屑导航">
+          <ol className="flex items-center space-x-2 text-sm text-gray-600">
+            <li>
+              <Link href="/" className="hover:text-blue-600 transition-colors">
+                首页
+              </Link>
+            </li>
+            <li className="flex items-center">
+              <svg className="w-4 h-4 mx-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+              <span className="text-gray-800">分享结果</span>
+            </li>
+          </ol>
+        </nav>
+
         {/* 分享页面标题 */}
         <div className="text-center mb-6">
           <div className="w-16 h-16 mx-auto mb-4 bg-white rounded-full shadow-lg flex items-center justify-center">
@@ -116,6 +135,17 @@ export default function SharePage() {
             </a>
           </p>
         </div>
+
+        {/* 结构化数据 */}
+        <StructuredData
+          type="ImageObject"
+          data={{
+            url: shareContent.imageUrl,
+            description: `${shareContent.locationData.location || '地理位置'}识别结果 - 图片地理位置识别应用分享`,
+            name: shareContent.locationData.location || '地理位置识别结果',
+            datePublished: shareContent.timestamp,
+          }}
+        />
       </div>
     </main>
   )

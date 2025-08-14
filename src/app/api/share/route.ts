@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
         ...locationData,
         shareId // 添加分享ID到位置数据中
       },
+      imageUrl: locationData.imageUrl || '',
+      introduction: locationData.introduction,
       timestamp: new Date().toISOString(),
       expiresAt: expiresAt.toISOString()
     }
