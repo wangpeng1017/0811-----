@@ -364,9 +364,18 @@ export default function LocationResult({ result, onReset }: LocationResultProps)
         </div>
       )}
 
+      {/* 地点名称显示 - 图片下方 */}
+      {result.location && (
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 text-center">
+            {result.location}
+          </h3>
+        </div>
+      )}
+
       {/* 结果信息区域 */}
       <div className="p-4 sm:p-6 relative z-10">
-      
+
         {/* 地点信息列表 - 紧凑布局 */}
         <div className="space-y-1.5">
           {result.continent && (
