@@ -141,22 +141,25 @@ export default function Home() {
     <ErrorBoundary>
       <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-lg mx-auto">
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full shadow-lg flex items-center justify-center">
-            <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+        {/* 只在未显示结果时显示标题区域 */}
+        {!result && (
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full shadow-lg flex items-center justify-center">
+              <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 leading-tight">
+              上传朋友圈的一张风景图
+            </h1>
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-2">
+              我来告诉你是哪里
+            </h2>
+            <p className="text-gray-600 text-sm">
+              AI智能识别图片拍摄地点
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 leading-tight">
-            上传朋友圈的一张风景图
-          </h1>
-          <h2 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-2">
-            我来告诉你是哪里
-          </h2>
-          <p className="text-gray-600 text-sm">
-            AI智能识别图片拍摄地点
-          </p>
-        </div>
+        )}
 
         {!result && !loading && (
           <>
