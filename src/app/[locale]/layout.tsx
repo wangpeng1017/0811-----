@@ -10,6 +10,11 @@ interface Props {
   params: { locale: string }
 }
 
+// 生成静态参数，确保所有支持的locale都被预生成
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }))
+}
+
 // 生成多语言metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = params.locale as Locale
