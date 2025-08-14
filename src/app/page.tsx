@@ -151,22 +151,11 @@ export default function Home() {
               </svg>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 leading-tight">
-              图片地理位置识别 - AI智能识别照片拍摄地点
+              AI智能识别照片拍摄地点
             </h1>
-            <h2 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-6">
               上传图片，立即获取地理位置信息
             </h2>
-            <p className="text-gray-600 text-sm mb-4">
-              基于GLM-4.5V模型的AI智能识别，支持大洲、国家、城市、具体地名及GPS坐标识别
-            </p>
-
-            {/* SEO优化的功能介绍 */}
-            <div className="text-center mb-6">
-              <p className="text-gray-700 text-sm leading-relaxed max-w-md mx-auto">
-                免费的在线图片位置识别工具，只需上传照片即可获取详细的地理位置信息。
-                支持景点介绍生成、智能对话交互和一键分享功能。保护隐私，无需注册。
-              </p>
-            </div>
           </div>
         )}
 
@@ -205,49 +194,7 @@ export default function Home() {
           <LocationResult result={result} onReset={handleReset} />
         )}
 
-        {/* SEO优化的FAQ部分 */}
-        {!result && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mt-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">常见问题</h3>
-            <div className="space-y-3 text-sm">
-              <details className="group">
-                <summary className="font-medium text-gray-700 cursor-pointer hover:text-blue-600">
-                  如何使用图片地理位置识别功能？
-                </summary>
-                <p className="mt-2 text-gray-600 pl-4">
-                  只需上传任意图片，我们的AI系统会自动分析图片中的地理特征，识别出拍摄地点的详细信息，包括大洲、国家、城市和具体地名。
-                </p>
-              </details>
 
-              <details className="group">
-                <summary className="font-medium text-gray-700 cursor-pointer hover:text-blue-600">
-                  支持哪些图片格式？
-                </summary>
-                <p className="mt-2 text-gray-600 pl-4">
-                  支持JPEG、PNG、HEIC、HEIF等常见图片格式，文件大小最大支持10MB。
-                </p>
-              </details>
-
-              <details className="group">
-                <summary className="font-medium text-gray-700 cursor-pointer hover:text-blue-600">
-                  识别准确率如何？
-                </summary>
-                <p className="mt-2 text-gray-600 pl-4">
-                  基于GLM-4.5V旗舰视觉推理模型，对知名地标和建筑物的识别准确率较高。图片越清晰、地理特征越明显，识别效果越好。
-                </p>
-              </details>
-
-              <details className="group">
-                <summary className="font-medium text-gray-700 cursor-pointer hover:text-blue-600">
-                  是否保护用户隐私？
-                </summary>
-                <p className="mt-2 text-gray-600 pl-4">
-                  我们重视用户隐私保护，上传的图片仅用于地理位置识别，不会存储或用于其他用途。
-                </p>
-              </details>
-            </div>
-          </div>
-        )}
 
         <footer className="text-center text-sm text-gray-500 mt-8">
           <p>© GLM-4.5V提供模型支持</p>
@@ -265,14 +212,7 @@ export default function Home() {
             <span className="inline-block mx-2">AI智能定位</span>
             <span className="inline-block mx-2">照片位置查询</span>
           </p>
-          <p className="mt-3 text-xs space-x-4">
-            <a href="/help" className="text-blue-500 hover:text-blue-600 underline">
-              使用帮助
-            </a>
-            <a href="/privacy" className="text-blue-500 hover:text-blue-600 underline">
-              隐私政策
-            </a>
-          </p>
+
         </footer>
 
         {/* 结构化数据 */}
