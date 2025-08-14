@@ -23,9 +23,10 @@ interface LocationData {
 interface LocationResultProps {
   result: LocationData
   onReset: () => void
+  isSharedView?: boolean
 }
 
-export default function LocationResult({ result, onReset }: LocationResultProps) {
+export default function LocationResult({ result, onReset, isSharedView = false }: LocationResultProps) {
   const [copySuccess, setCopySuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [introduction, setIntroduction] = useState<string>('')
