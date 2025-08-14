@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { getExampleImages, ExampleImage } from '@/data/example-images'
 
 interface ExampleImagesProps {
@@ -11,7 +10,6 @@ interface ExampleImagesProps {
 
 export default function ExampleImages({ onImageSelect, disabled = false }: ExampleImagesProps) {
   const [loadingImageId, setLoadingImageId] = useState<string | null>(null)
-  const t = useTranslations()
   const exampleImages = getExampleImages()
 
   const handleImageClick = async (image: ExampleImage) => {
@@ -34,10 +32,10 @@ export default function ExampleImages({ onImageSelect, disabled = false }: Examp
       {/* 标题 */}
       <div className="text-center mb-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          {t('homepage.exampleImages.title')}
+          点击下面的图片试试？
         </h3>
         <p className="text-sm text-gray-600">
-          {t('homepage.exampleImages.subtitle')}
+          选择一张示例图片快速体验AI识别功能
         </p>
       </div>
 
@@ -63,7 +61,7 @@ export default function ExampleImages({ onImageSelect, disabled = false }: Examp
               {/* 图片 */}
               <img
                 src={image.url}
-                alt={t(`homepage.exampleImages.${image.id}`)}
+                alt={image.alt}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                 loading="lazy"
               />
