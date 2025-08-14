@@ -18,12 +18,6 @@ export default function SharePage() {
   const [error, setError] = useState<string | null>(null)
   const t = useTranslations()
 
-  useEffect(() => {
-    if (shareId) {
-      fetchShareContent(shareId)
-    }
-  }, [shareId, fetchShareContent])
-
   const fetchShareContent = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/share?id=${id}`)
@@ -41,6 +35,12 @@ export default function SharePage() {
       setLoading(false)
     }
   }, [t])
+
+  useEffect(() => {
+    if (shareId) {
+      fetchShareContent(shareId)
+    }
+  }, [shareId, fetchShareContent])
 
   const handleReset = () => {
     // 分享页面不需要重置功能，直接跳转到首页
