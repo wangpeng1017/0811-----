@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -22,9 +22,9 @@ export default function SharePage() {
     if (shareId) {
       fetchShareContent(shareId)
     }
-  }, [shareId])
+  }, [shareId, fetchShareContent])
 
-  const fetchShareContent = async (id: string) => {
+  const fetchShareContent = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/share?id=${id}`)
       const data = await response.json()
@@ -40,7 +40,7 @@ export default function SharePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [t])
 
   const handleReset = () => {
     // 分享页面不需要重置功能，直接跳转到首页
