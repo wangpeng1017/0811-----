@@ -13,9 +13,7 @@ export default createMiddleware({
 export const config = {
   // 匹配所有路径，除了API路由、静态文件等
   matcher: [
-    // 匹配所有路径，排除API、静态文件、图片等
-    '/((?!api|_next|_vercel|.*\\..*|favicon.ico|robots.txt|sitemap.xml).*)',
-    // 匹配根路径
-    '/'
+    // 匹配所有路径，排除API、静态文件、图片等，以及已经包含locale的路径
+    '/((?!api|_next|_vercel|.*\\..*|favicon.ico|robots.txt|sitemap.xml).*)'
   ]
 }
