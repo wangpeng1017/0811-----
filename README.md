@@ -3,15 +3,15 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/wangpeng1017/0811-----/releases/tag/v1.0.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2.5-black.svg)](https://nextjs.org/)
-[![GLM-4.5V](https://img.shields.io/badge/GLM--4.5V-AI%20Model-orange.svg)](https://open.bigmodel.cn/)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-orange.svg)](https://ai.google.dev/)
 
-基于智谱AI GLM-4.5V旗舰视觉推理模型的智能地理位置识别应用。支持图片上传、AI识别、景点介绍生成、智能对话和一键分享等完整功能。
+基于Google Gemini 2.5 Flash多模态快速推理模型的智能地理位置识别应用。支持图片上传、AI识别、景点介绍生成、智能对话和一键分享等完整功能。
 
 ## ✨ 核心功能特性
 
 ### 🤖 AI智能识别
-- **GLM-4.5V旗舰模型**: 采用智谱AI最新视觉推理模型
-- **深度推理模式**: 启用thinking模式，提供更准确的地理位置识别
+- **Gemini 2.5 Flash模型**: 采用Google最新多模态快速推理模型
+- **多模态能力**: 支持文本和图像的综合理解和分析
 - **多维度信息**: 识别大洲、国家、省份、城市、具体地点和经纬度坐标
 - **高精度识别**: 支持建筑物、标识、自然景观等多种地理特征
 
@@ -22,7 +22,7 @@
 - **一键生成**: 点击即可获取专业的景点介绍
 
 ### 💬 智能对话交互
-- **GLM-4.5V对话**: 基于识别结果的智能问答系统
+- **Gemini对话**: 基于识别结果的智能问答系统
 - **上下文理解**: 保持对话历史，支持连续交互
 - **专业回答**: 涵盖历史、文化、旅游等多个领域
 - **实时响应**: 快速生成准确的回答内容
@@ -63,9 +63,9 @@
 - **图片存储**: 内存存储 + 临时文件系统
 
 ### AI服务集成
-- **主模型**: 智谱AI GLM-4.5V 旗舰视觉推理模型
-- **推理模式**: Thinking模式启用，提供更准确的分析
-- **API调用**: RESTful API + 流式响应
+- **主模型**: Google Gemini 2.5 Flash 多模态快速推理模型
+- **多模态能力**: 支持文本和图像的综合处理
+- **API调用**: Google Generative Language API + 流式响应
 - **错误处理**: 智能重试机制 + 降级策略
 
 ### 开发工具链
@@ -127,15 +127,15 @@ npm install
 cp .env.local.example .env.local
 ```
 
-2. 在 `.env.local` 中配置智谱AI API Token：
+2. 在 `.env.local` 中配置Google Gemini API Key：
 ```env
-ZHIPU_API_TOKEN=your_zhipu_ai_token_here
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 获取智谱AI API Token
-1. 访问 [智谱AI开放平台](https://open.bigmodel.cn/)
-2. 注册并登录账户
-3. 创建API Key
+### 获取Google Gemini API Key
+1. 访问 [Google AI Studio](https://ai.google.dev/) 或 [Google Cloud Console](https://console.cloud.google.com/)
+2. 创建项目并启用Generative Language API
+3. 生成API Key
 4. 将API Key配置到环境变量中
 
 ### 启动开发服务器
@@ -154,12 +154,12 @@ npm run dev
 1. Fork本仓库
 2. 在Vercel中导入项目
 3. 配置环境变量：
-   - `ZHIPU_API_TOKEN`: 智谱AI API Token
+   - `GEMINI_API_KEY`: Google Gemini API Key
 4. 部署完成
 
 ### 环境变量配置
 在Vercel项目设置中添加以下环境变量：
-- `ZHIPU_API_TOKEN`: 智谱AI API Token（必需）
+- `GEMINI_API_KEY`: Google Gemini API Key（必需）
 - `NEXT_PUBLIC_ADMIN_PASSWORD`: 管理员面板密码（可选）
 
 ## 📊 成本控制
