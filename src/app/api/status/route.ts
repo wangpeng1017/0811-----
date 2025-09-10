@@ -23,9 +23,9 @@ export async function GET() {
         features: {
           supportedFormats: ['JPEG', 'PNG', 'HEIC', 'HEIF'],
           maxFileSize: '10MB',
-          aiModel: 'GLM-4.5V',
-          modelType: '旗舰视觉推理模型',
-          thinkingMode: 'enabled',
+          aiModel: 'Gemini 2.5 Flash',
+          modelType: '多模态快速推理模型',
+          thinkingMode: 'n/a',
           responseFormat: 'JSON'
         },
         lastUpdated: new Date().toISOString()
