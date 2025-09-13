@@ -63,7 +63,7 @@
 - **图片存储**: 内存存储 + 临时文件系统
 
 ### AI服务集成
-- **主模型**: Google Gemini Pro Vision 多模态推理模型
+- **主模型**: Google Gemini 2.5 Flash 多模态推理模型
 - **多模态能力**: 支持文本和图像的综合处理
 - **API调用**: Google Generative Language API + 流式响应
 - **错误处理**: 智能重试机制 + 降级策略

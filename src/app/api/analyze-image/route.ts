@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { canUseTokens, recordTokenUsage, estimateTokensForImage, getUsageStats } from '@/lib/token-manager'
 
 // Google Gemini API配置
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro-vision:generateContent'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
 
 export async function POST(request: NextRequest) {
   try {
