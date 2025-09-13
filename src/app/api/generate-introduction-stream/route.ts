@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { markdownToPlainText } from '@/lib/markdown-utils'
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:streamGenerateContent'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +45,7 @@ ${locationInfo}
 
 请用中文回答，语言要生动有趣，适合游客阅读。`
 
-    // 调用Google Gemini流式API
+    // 调用Google Gemini API（使用非流式方式，在前端模拟流式效果）
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: {
@@ -70,54 +70,32 @@ ${locationInfo}
       return new Response(`API请求失败: ${response.status}`, { status: 500 })
     }
 
-    // 创建可读流
+    const data = await response.json()
+    const fullText = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!fullText) {
+      return new Response('无法生成介绍内容', { status: 500 })
+    }
+
+    // 创建模拟流式输出（将全文分段发送）
     const encoder = new TextEncoder()
-    const decoder = new TextDecoder()
+    const chunks = fullText.split('')
+    const chunkSize = 3 // 每次发送3个字符
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const reader = response.body?.getReader()
-          if (!reader) {
-            controller.error(new Error('无法获取响应流'))
-            return
-          }
-
-          let buffer = ''
-          
-          while (true) {
-            const { done, value } = await reader.read()
-            
-            if (done) {
-              // 发送结束信号
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-              controller.close()
-              break
-            }
-
-            // 解码数据
-            buffer += decoder.decode(value, { stream: true })
-            const lines = buffer.split('\n')
-            buffer = lines.pop() || '' // 保留不完整的行
-
-            for (const line of lines) {
-              if (line.trim() && line !== 'data: [DONE]') {
-                try {
-                  // Gemini流式响应格式不同，直接解析JSON
-                  const parsed = JSON.parse(line)
-                  const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                  
-                  if (content) {
-                    // 发送内容片段
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\\n\\n`))
-                  }
-                } catch (parseError) {
-                  // 忽略非 JSON 行
-                  console.debug('跳过非 JSON 行:', line)
-                }
-              }
+          for (let i = 0; i < chunks.length; i += chunkSize) {
+            const chunk = chunks.slice(i, i + chunkSize).join('')
+            if (chunk) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`))
+              // 模拟打字机效果，每个块之间稍微延迟
+              await new Promise(resolve => setTimeout(resolve, 20))
             }
           }
+          // 发送结束信号
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+          controller.close()
         } catch (error) {
           console.error('流式处理错误:', error)
           controller.error(error)
