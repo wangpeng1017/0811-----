@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { formatChatAnswer } from '@/lib/markdown-utils'
 
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
 
 export async function POST(request: NextRequest) {
   try {
     // 检查环境变量
-    const apiToken = process.env.ZHIPU_API_TOKEN
-    if (!apiToken) {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
       return NextResponse.json(
         { success: false, error: '服务配置错误' },
         { status: 500 }
@@ -34,19 +34,16 @@ export async function POST(request: NextRequest) {
       locationData.latitude && locationData.longitude && `坐标: ${locationData.latitude}, ${locationData.longitude}`
     ].filter(Boolean).join('\n')
 
-    // 调用智谱AI生成介绍文本
-    const response = await fetch(ZHIPU_API_URL, {
+    // 调用Google Gemini API生成介绍文本
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'glm-4.5v',
-        messages: [
-          {
-            role: 'user',
-            content: `请为以下地理位置生成一段详细的景点介绍，要求：
+        contents: [{
+          parts: [{
+            text: `请为以下地理位置生成一段详细的景点介绍，要求：
 
 地点信息：
 ${locationInfo}
@@ -60,21 +57,23 @@ ${locationInfo}
 6. 不要包含标题或序号
 
 请直接返回介绍文本，不要包含其他格式。`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800
+        }
       })
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('智谱AI API错误:', response.status, errorText)
+      console.error('Google Gemini API错误:', response.status, errorText)
       throw new Error(`API请求失败: ${response.status}`)
     }
 
     const data = await response.json()
-    const introduction = data.choices?.[0]?.message?.content
+    const introduction = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!introduction) {
       return NextResponse.json(

@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server'
 import { markdownToPlainText } from '@/lib/markdown-utils'
 
-const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:streamGenerateContent'
 
 export async function POST(request: NextRequest) {
   try {
     // 检查环境变量
-    const apiToken = process.env.ZHIPU_API_TOKEN
-    if (!apiToken) {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
       return new Response('服务配置错误', { status: 500 })
     }
 
@@ -45,30 +45,28 @@ ${locationInfo}
 
 请用中文回答，语言要生动有趣，适合游客阅读。`
 
-    // 调用智谱AI流式API
-    const response = await fetch(ZHIPU_API_URL, {
+    // 调用Google Gemini流式API
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'glm-4.5v',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500,
-        stream: true // 启用流式传输
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1500
+        }
       })
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('智谱AI API错误:', response.status, errorText)
+      console.error('Google Gemini API错误:', response.status, errorText)
       return new Response(`API请求失败: ${response.status}`, { status: 500 })
     }
 
@@ -103,24 +101,19 @@ ${locationInfo}
             buffer = lines.pop() || '' // 保留不完整的行
 
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6).trim()
-                
-                if (data === '[DONE]') {
-                  controller.enqueue(encoder.encode('data: [DONE]\n\n'))
-                  continue
-                }
-
+              if (line.trim() && line !== 'data: [DONE]') {
                 try {
-                  const parsed = JSON.parse(data)
-                  const content = parsed.choices?.[0]?.delta?.content
+                  // Gemini流式响应格式不同，直接解析JSON
+                  const parsed = JSON.parse(line)
+                  const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text
                   
                   if (content) {
                     // 发送内容片段
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`))
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\\n\\n`))
                   }
                 } catch (parseError) {
-                  console.error('解析SSE数据失败:', parseError)
+                  // 忽略非 JSON 行
+                  console.debug('跳过非 JSON 行:', line)
                 }
               }
             }

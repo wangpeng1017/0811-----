@@ -21,17 +21,24 @@ export interface ApiResponse {
   message?: string
 }
 
-// 智谱AI API响应类型
-export interface ZhipuAIResponse {
-  // 根据实际API响应结构定义
-  choices?: Array<{
-    message?: {
-      content?: string
+// Google Gemini API响应类型
+export interface GeminiAPIResponse {
+  // 根据Google Gemini API响应结构定义
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string
+      }>
     }
   }>
+  usageMetadata?: {
+    promptTokenCount?: number
+    candidatesTokenCount?: number
+    totalTokenCount?: number
+  }
   error?: {
     message: string
-    type: string
+    code: number
   }
 }
 
