@@ -63,9 +63,9 @@
 - **图片存储**: 内存存储 + 临时文件系统
 
 ### AI服务集成
-- **主模型**: Google Gemini 2.5 Flash 多模态快速推理模型
+- **主模型**: 智谱AI GLM-4.5V 旗舰视觉推理模型
 - **多模态能力**: 支持文本和图像的综合处理
-- **API调用**: Google Generative Language API + 流式响应
+- **API调用**: 智谱AI API + 流式响应
 - **错误处理**: 智能重试机制 + 降级策略
 
 ### 开发工具链
@@ -127,16 +127,17 @@ npm install
 cp .env.local.example .env.local
 ```
 
-2. 在 `.env.local` 中配置Google Gemini API Key：
+2. 在 `.env.local` 中配置智谱AI API Token：
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+ZHIPU_API_TOKEN=your_zhipu_ai_token_here
 ```
 
-### 获取Google Gemini API Key
-1. 访问 [Google AI Studio](https://ai.google.dev/) 或 [Google Cloud Console](https://console.cloud.google.com/)
-2. 创建项目并启用Generative Language API
-3. 生成API Key
-4. 将API Key配置到环境变量中
+### 获取智谱AI API Token
+1. 访问 [智谱AI开放平台](https://open.bigmodel.cn/)
+2. 注册账户并登录
+3. 在控制台中创建API Key
+4. 确保账户有足够余额（GLM-4.5V是付费模型）
+5. 将API Token配置到环境变量中
 
 ### 启动开发服务器
 ```bash
@@ -154,12 +155,12 @@ npm run dev
 1. Fork本仓库
 2. 在Vercel中导入项目
 3. 配置环境变量：
-   - `GEMINI_API_KEY`: Google Gemini API Key
+   - `ZHIPU_API_TOKEN`: 智谱AI API Token
 4. 部署完成
 
 ### 环境变量配置
 在Vercel项目设置中添加以下环境变量：
-- `GEMINI_API_KEY`: Google Gemini API Key（必需）
+- `ZHIPU_API_TOKEN`: 智谱AI API Token（必需）
 - `NEXT_PUBLIC_ADMIN_PASSWORD`: 管理员面板密码（可选）
 
 ## 📊 成本控制
@@ -261,13 +262,46 @@ GET /api/status
 
 ## 🐛 故障排除
 
+### 智谱AI API错误解决
+
+#### 401 身份验证失败
+**可能原因：**
+- API Token无效或已过期
+- Token格式错误
+- 账户已被停用
+
+**解决方案：**
+1. 访问 [https://open.bigmodel.cn/](https://open.bigmodel.cn/) 检查账户状态
+2. 重新生成API Token
+3. 更新 `.env.local` 文件中的 `ZHIPU_API_TOKEN`
+4. 重启应用
+
+#### 403 访问被拒绝
+**可能原因：**
+- 账户余额不足
+- API权限不足
+- 模型访问权限问题
+
+**解决方案：**
+1. 登录智谱AI平台充值账户
+2. 检查API权限设置
+3. 确认GLM-4V模型访问权限
+
+#### 429 调用频率超限
+**解决方案：**
+- 等待1-2分钟后重试
+- 检查API调用频率限制
+
 ### 常见问题
 1. **上传失败**: 检查图片格式和大小限制
 2. **识别失败**: 确保图片清晰，包含可识别的地理特征
 3. **服务不可用**: 可能已达到使用限制，请稍后重试
+4. **API Token配置**: 检查 `.env.local` 文件是否正确配置
 
 ### 错误代码
 - `400`: 请求参数错误
+- `401`: 身份验证失败
+- `403`: 访问被拒绝
 - `429`: 使用量超限
 - `500`: 服务器内部错误
 

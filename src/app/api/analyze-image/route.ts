@@ -9,8 +9,13 @@ export async function POST(request: NextRequest) {
     // 检查环境变量
     const apiToken = process.env.ZHIPU_API_TOKEN
     if (!apiToken) {
+      console.error('ZHIPU_API_TOKEN环境变量未设置')
       return NextResponse.json(
-        { success: false, error: '服务配置错误' },
+        { 
+          success: false, 
+          error: '智谱AI API Token未配置，请在.env.local文件中设置ZHIPU_API_TOKEN环境变量',
+          details: '请参考.env.local.example文件配置您的API Token'
+        },
         { status: 500 }
       )
     }
@@ -99,6 +104,13 @@ export async function POST(request: NextRequest) {
 
 async function callZhipuAI(apiToken: string, base64Image: string, mimeType: string) {
   try {
+    // 验证API Token格式
+    if (!apiToken || apiToken.trim() === '' || apiToken === 'your_zhipu_ai_token_here') {
+      throw new Error('无效的API Token，请检查环境变量配置')
+    }
+
+    console.log('调用智谱AI API，Token长度:', apiToken.length)
+    
     const response = await fetch(ZHIPU_API_URL, {
       method: 'POST',
       headers: {
@@ -136,7 +148,19 @@ async function callZhipuAI(apiToken: string, base64Image: string, mimeType: stri
     if (!response.ok) {
       const errorText = await response.text()
       console.error('智谱AI API错误:', response.status, errorText)
-      throw new Error(`API请求失败: ${response.status} - ${errorText}`)
+      
+      // 针对不同的错误状态码提供更详细的错误信息
+      if (response.status === 401) {
+        throw new Error(`智谱AI API身份验证失败 (401):\n\n可能的原因：\n1. API Token无效或已过期\n2. Token格式错误\n3. 账户已被停用\n\n解决方案：\n1. 访问 https://open.bigmodel.cn/ 检查账户状态\n2. 重新生成API Token\n3. 更新.env.local文件中的ZHIPU_API_TOKEN\n\n当前Token长度: ${apiToken.length}字符\n错误详情: ${errorText}`)
+      } else if (response.status === 403) {
+        throw new Error(`智谱AI API访问被拒绝 (403):\n\n可能的原因：\n1. 账户余额不足\n2. API权限不足\n3. 模型访问权限问题\n\n解决方案：\n1. 登录 https://open.bigmodel.cn/ 充值账户\n2. 检查API权限设置\n3. 确认GLM-4V模型访问权限\n\n错误详情: ${errorText}`)
+      } else if (response.status === 429) {
+        throw new Error(`智谱AI API调用频率超限 (429):\n\n请稍等片刻后重试\n建议等待时间: 1-2分钟\n\n错误详情: ${errorText}`)
+      } else if (response.status >= 500) {
+        throw new Error(`智谱AI服务器错误 (${response.status}):\n\n这是智谱AI服务端的问题，请稍后重试\n如果问题持续，请联系智谱AI客服\n\n错误详情: ${errorText}`)
+      } else {
+        throw new Error(`智谱AI API请求失败 (${response.status}):\n\n未知错误，请检查网络连接或联系技术支持\n\n错误详情: ${errorText}`)
+      }
     }
 
     const data = await response.json()
@@ -192,6 +216,13 @@ async function callZhipuAI(apiToken: string, base64Image: string, mimeType: stri
 
   } catch (error) {
     console.error('智谱AI调用失败:', error)
-    return { success: false, error: 'AI服务暂时不可用' }
+    
+    // 返回更详细的错误信息
+    const errorMessage = error instanceof Error ? error.message : 'AI服务暂时不可用'
+    return { 
+      success: false, 
+      error: errorMessage,
+      details: '请检查API Token配置或网络连接'
+    }
   }
 }
