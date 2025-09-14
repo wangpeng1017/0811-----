@@ -8,6 +8,41 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import StructuredData from '@/components/StructuredData'
 import { analyzeImageLocation, compressImage } from '@/lib/api'
 
+// 友好错误消息映射函数
+const getFriendlyErrorMessage = (error?: string): string => {
+  if (!error) return '这个图片我看不清，换个试试吧'
+  
+  const errorLower = error.toLowerCase()
+  
+  // 检查是否是服务繁忙错误
+  if (errorLower.includes('服务繁忙') || errorLower.includes('503') || errorLower.includes('过载')) {
+    return '🤖 AI服务繁忙，请稍后再试'
+  }
+  
+  // 检查是否是网络错误
+  if (errorLower.includes('网络') || errorLower.includes('network') || errorLower.includes('timeout')) {
+    return '🌐 网络连接异常，请检查网络后重试'
+  }
+  
+  // 检查是否是图片格式错误
+  if (errorLower.includes('格式') || errorLower.includes('format') || errorLower.includes('type')) {
+    return '📷 图片格式不支持，请上传JPEG、PNG或HEIC格式'
+  }
+  
+  // 检查是否是文件大小错误
+  if (errorLower.includes('大小') || errorLower.includes('size') || errorLower.includes('mb')) {
+    return '📁 图片文件过大，请上传小于10MB的图片'
+  }
+  
+  // 检查是否是识别失败
+  if (errorLower.includes('识别') || errorLower.includes('分析') || errorLower.includes('看不清')) {
+    return '👁️ 无法识别图片中的地点，请尝试更清晰的图片'
+  }
+  
+  // 默认友好提示
+  return '😅 这个图片我看不清，换个试试吧'
+}
+
 export default function Home() {
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -55,14 +90,17 @@ export default function Home() {
           imageUrl: serverImageUrl
         })
       } else {
+        // 根据错误类型提供友好提示
+        const friendlyError = getFriendlyErrorMessage(response.error)
         setResult({
-          error: response.error || '这个图片我看不清，换个试试吧',
+          error: friendlyError,
           imageUrl: serverImageUrl // 即使失败也保留图片
         })
       }
     } catch (error) {
       console.error('上传失败:', error)
-      setResult({ error: '这个图片我看不清，换个试试吧' })
+      const friendlyError = getFriendlyErrorMessage(error instanceof Error ? error.message : '未知错误')
+      setResult({ error: friendlyError })
     } finally {
       setLoading(false)
     }
@@ -125,14 +163,17 @@ export default function Home() {
           imageUrl: serverImageUrl
         })
       } else {
+        // 根据错误类型提供友好提示
+        const friendlyError = getFriendlyErrorMessage(analysisResponse.error)
         setResult({
-          error: analysisResponse.error || '这个图片我看不清，换个试试吧',
+          error: friendlyError,
           imageUrl: serverImageUrl // 即使失败也保留图片
         })
       }
     } catch (error) {
       console.error('处理示例图片失败:', error)
-      setResult({ error: '处理图片失败，请重试' })
+      const friendlyError = getFriendlyErrorMessage(error instanceof Error ? error.message : '未知错误')
+      setResult({ error: friendlyError })
     } finally {
       setLoading(false)
     }

@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { canUseTokens, recordTokenUsage, estimateTokensForImage, getUsageStats } from '@/lib/token-manager'
 
-// Google Gemini API配置
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
+// Google Gemini API配置 - 多模型备选方案
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',     // 主要模型，性能最佳
+  'gemini-1.5-flash',     // 备用模型1，速度快
+  'gemini-1.5-pro'        // 备用模型2，精度高
+]
+
+const getGeminiApiUrl = (modelName: string) => 
+  `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent`
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,8 +78,8 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const base64 = Buffer.from(bytes).toString('base64')
 
-    // 调用Google Gemini API
-    const aiResponse = await callGeminiAPI(apiKey, base64, file.type)
+    // 调用Google Gemini API（多模型重试）
+    const aiResponse = await callGeminiAPIWithRetry(apiKey, base64, file.type)
 
     if (!aiResponse.success) {
       return NextResponse.json(aiResponse, { status: 500 })
@@ -102,14 +109,73 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function callGeminiAPI(apiKey: string, base64Image: string, mimeType: string) {
+// 多模型重试函数
+async function callGeminiAPIWithRetry(apiKey: string, base64Image: string, mimeType: string) {
+  let lastError: any = null
+  
+  // 依次尝试所有模型
+  for (let i = 0; i < GEMINI_MODELS.length; i++) {
+    const modelName = GEMINI_MODELS[i]
+    console.log(`尝试使用模型: ${modelName} (第${i + 1}/${GEMINI_MODELS.length}次尝试)`)
+    
+    try {
+      const result = await callGeminiAPI(apiKey, base64Image, mimeType, modelName)
+      if (result.success) {
+        console.log(`模型 ${modelName} 调用成功`)
+        return result
+      }
+      lastError = result
+    } catch (error) {
+      console.error(`模型 ${modelName} 调用失败:`, error)
+      lastError = error
+      
+      // 如果是503过载错误，等待一会再试下一个模型
+      if (error instanceof Error && error.message.includes('503')) {
+        console.log(`模型 ${modelName} 过载，2秒后尝试下一个模型...`)
+        if (i < GEMINI_MODELS.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        }
+        continue
+      }
+      
+      // 其他错误也继续尝试下一个模型
+      if (i < GEMINI_MODELS.length - 1) {
+        console.log(`将尝试下一个模型...`)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+  }
+  
+  // 所有模型都失败了，返回友好的错误信息
+  console.error('所有Gemini模型都无法使用:', lastError)
+  
+  // 返回友好的错误信息
+  if (lastError instanceof Error) {
+    if (lastError.message.includes('503') || lastError.message.includes('overloaded')) {
+      return {
+        success: false,
+        error: '服务繁忙，请稍后再试 😥',
+        details: '所有AI模型都在繁忙中，请稍等片刻再试一次'
+      }
+    }
+  }
+  
+  return {
+    success: false,
+    error: 'AI服务暂时不可用，请稍后再试 😔',
+    details: '请检查网络连接或稍后重试'
+  }
+}
+
+async function callGeminiAPI(apiKey: string, base64Image: string, mimeType: string, modelName = 'gemini-2.5-flash') {
   try {
     // 验证API Key格式
     if (!apiKey || apiKey.trim() === '' || apiKey === 'your_gemini_api_key_here') {
       throw new Error('无效的API Key，请检查环境变量配置')
     }
 
-    console.log('调用Google Gemini API，API Key长度:', apiKey.length)
+    const GEMINI_API_URL = getGeminiApiUrl(modelName)
+    console.log(`调用Google Gemini API: ${modelName}，API Key长度: ${apiKey.length}`)
     
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',

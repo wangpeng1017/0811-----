@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { formatChatAnswer } from '@/lib/markdown-utils'
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent'
+// Google Gemini API配置 - 多模型备选方案
+const GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-1.5-flash', 
+  'gemini-1.5-pro'
+]
+
+const getGeminiApiUrl = (modelName: string) => 
+  `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent`
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +43,7 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean).join('\n')
 
     // 调用Google Gemini API生成介绍文本
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    const response = await fetch(`${getGeminiApiUrl(GEMINI_MODELS[0])}?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
